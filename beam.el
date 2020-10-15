@@ -194,7 +194,7 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
   (beam--choose title (beam--make-project-list)))
 
 (defun beam-remove-project (&optional project-name)
-  (interactive (beam--select-project "Remove Beam Project"))
+  (interactive (list (beam--select-project "Remove Beam Project")))
   (setq beam-local-projects
         (delete-if (lambda (a) (equal (car a) project-name))
                    beam-local-projects)))
