@@ -200,6 +200,20 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
                    beam-local-projects))
   (beam--write-projects))
 
+(defun beam-cleanup-projects ()
+  "Remove projects whose paths no longer exist."
+  (interactive)
+  (let (deleted)
+   (setq beam-local-projects
+         (delete-if (lambda (x)
+                      (when (not (file-exists-p (cadr x)))
+                        (push (car x) deleted)))
+                    beam-local-projects))
+   (beam--write-projects)
+   (if deleted
+       (message "Removed: %s" deleted)
+     (message "No projects removed"))))
+
 (cl-defmacro beam--in-project-dir ((project-name) &body body)
   (declare (indent 1))
   (let ((d (gensym))
