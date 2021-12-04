@@ -80,14 +80,14 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
                  ,@body)
             `(progn ,@body))
        (when ,writep
-         (write-region 1 (point-max) ,filename)))))
+         (write-region 1 (point-max) ,filename nil -1)))))
 
 (cl-defmacro beam--with-projects-file ((&key readp writep) &body body)
   (declare (indent 1))
   `(beam--with-file (beam-local-projects-file :readp ,readp :writep ,writep) ,@body))
 
 (defun beam--choose (prompt list)
-  (case beam-preferred-completion-method
+  (cl-case beam-preferred-completion-method
     (helm (helm :sources `((name . ,prompt)
                            (candidates . ,list)
                            (action . ,(lambda (x) x)))))
@@ -103,6 +103,9 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
 (defun beam--write-projects ()
   (beam--with-projects-file (:writep t)
     (print beam-local-projects (current-buffer))))
+
+(defun beam--project-root-from-name (project)
+  (cadr (assoc project beam-local-projects 'equal)))
 
 (defun beam--find-project-root (dir)
   (let ((default-directory (expand-file-name (or dir default-directory))))
@@ -130,15 +133,18 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
         (beam--write-projects)
         (message "Added project %s (%s)." name dir)))))
 
+(defun beam--ensure-project-root (dir)
+  (or (file-exists-p (concat (file-name-as-directory dir) ".project-root"))
+      (when (yes-or-no-p (format "No .project-root in '%s'.  Create? " dir))
+        (let ((default-directory dir))
+          (beam--with-file (".project-root" :writep t))
+          t))))
+
 (defun beam-add-project (&optional dir)
   (interactive "D")
-  (if (file-exists-p (concat (file-name-as-directory dir) ".project-root"))
-      (unless (beam--add-project dir)
-        (message "Already a project: %s" dir))
-    (when (yes-or-no-p (format "No .project-root in '%s'.  Create? " dir))
-      (let ((default-directory dir))
-        (beam--with-file (".project-root" :writep t))
-        (beam--add-project dir)))))
+  (when (beam--ensure-project-root dir)
+    (unless (beam--add-project dir)
+      (message "Already a project: %s" dir))))
 
 (defun beam--list-files (dir)
   (let* ((default-directory dir)
@@ -204,22 +210,22 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
   "Remove projects whose paths no longer exist."
   (interactive)
   (let (deleted)
-   (setq beam-local-projects
-         (delete-if (lambda (x)
-                      (when (not (file-exists-p (cadr x)))
-                        (push (car x) deleted)))
-                    beam-local-projects))
-   (beam--write-projects)
-   (if deleted
-       (message "Removed: %s" deleted)
-     (message "No projects removed"))))
+    (setq beam-local-projects
+          (delete-if (lambda (x)
+                       (when (not (file-exists-p (cadr x)))
+                         (push (car x) deleted)))
+                     beam-local-projects))
+    (beam--write-projects)
+    (if deleted
+        (message "Removed: %s" deleted)
+      (message "No projects removed"))))
 
 (cl-defmacro beam--in-project-dir ((project-name) &body body)
   (declare (indent 1))
   (let ((d (gensym))
         (p (gensym)))
     `(let* ((,p ,project-name)
-            (,d (cadr (assoc ,p beam-local-projects 'equal))))
+            (,d (beam--project-root-from-name ,p)))
        (if (null ,d)
            (message "%s is not a project" ,p)
          (let ((default-directory ,d))
@@ -238,6 +244,7 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
 (defun beam-switch-project (&optional project)
   (interactive (list (beam--select-project "Select Project")))
   (beam--in-project-dir (project)
+    (beam--ensure-project-root (beam--project-root-from-name project))
     (funcall beam-project-landing-function)))
 
 (defun beam-find-in-project (&optional clear-cache)
