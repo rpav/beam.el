@@ -104,6 +104,15 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
   (beam--with-projects-file (:writep t)
     (print beam-local-projects (current-buffer))))
 
+(defun beam-write-projects-txt ()
+  (interactive)
+  (beam--with-file ("~/.emacs.d/beam-projects.txt" :writep t)
+    (loop for project in (sort (copy-list beam-local-projects)
+                               (lambda (a b) (string-collate-lessp (car a) (car b))))
+          do
+          (princ (format "%s %s\n" (car project) (cadr project))
+                 (current-buffer)))))
+
 (defun beam--project-root-from-name (project)
   (cadr (assoc project beam-local-projects 'equal)))
 
