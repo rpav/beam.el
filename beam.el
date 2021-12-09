@@ -60,6 +60,11 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
   :type 'boolean
   :group 'beam)
 
+(defcustom beam-write-txt-on-op nil
+  "When performing operations that update the project list, automatically write ~/.emacs.d/beam-projects.txt"
+  :type 'boolean
+  :group 'beam)
+
 ;;;
 
 (defvar beam-local-projects ()
@@ -102,7 +107,9 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
 
 (defun beam--write-projects ()
   (beam--with-projects-file (:writep t)
-    (print beam-local-projects (current-buffer))))
+    (print beam-local-projects (current-buffer)))
+  (when beam-write-txt-on-op
+    (beam-write-projects-txt)))
 
 (defun beam-write-projects-txt ()
   (interactive)

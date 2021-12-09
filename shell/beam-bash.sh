@@ -9,7 +9,7 @@ _beam_file_test() {
            echo >&2
         fi
 
-        echo "No ~/.emacs.d/beam-projects.el found; run M-x beam-write-projects-txt in emacs." >&2
+        echo "No ~/.emacs.d/beam-projects.txt found; run M-x beam-write-projects-txt in emacs." >&2
         return 1
     fi
 

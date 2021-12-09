@@ -19,7 +19,7 @@ To add a project to Beam's "known" list of projects, use `M-x beam-add-project`;
 * `M-x beam-switch-project`: Offer a list of known projects to switch to.  This will by default show `dired` for the project's root.  If you want projectile-like behavior to query a file instead, you can customize `beam-project-landing-function` to the following...
 * `M-x beam-find-in-project`: Present a list of files to find in the project.  By default this will also add it to your find-file history.
 * `M-x beam-cleanup-projects`: Remove projects that can no longer be found.
-* `M-x beam-write-projects-txt`: Export a list of project names and directories, one per line, to `~/.emacs.d/beam-projects.txt`.
+* `M-x beam-write-projects-txt`: Export a list of project names and directories, one per line, to `~/.emacs.d/beam-projects.txt`.  This will be done automatically if `beam-write-txt-on-op` is non-`nil`.
 
 If you make a `.beamignore` file in the project root, this will be exported as `BEAM_IGNORE_FILE` to the configured command; this can be useful for ignoring a different set of files than the ones you commit.
 
