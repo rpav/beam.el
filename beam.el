@@ -162,6 +162,18 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
     (unless (beam--add-project dir)
       (message "Already a project: %s" dir))))
 
+(defun beam--list-files-to (dir buffer)
+  (let* ((default-directory dir)
+         (process-environment process-environment)
+         (beamignore-p (file-exists-p ".beamignore")))
+    (when beamignore-p
+      (push (concat "BEAM_IGNORE_FILE=.beamignore") process-environment))
+    (let ((s (if beamignore-p
+                 (shell-command-to-string beam-list-files-with-beamignore-command)
+               (shell-command-to-string beam-list-files-command))))
+      (with-current-buffer (get-buffer-create buffer)
+        (insert s)))))
+
 (defun beam--list-files (dir)
   (let* ((default-directory dir)
          (process-environment process-environment)
@@ -282,3 +294,13 @@ format as .gitignore, but specifies a different set of files for Beam to ignore.
   (beam-project-name project))
 
 (provide 'projectile)
+
+
+;;; project.el
+(defun beam-project-find-function (dir)
+  (list 'beam (beam-project-root dir)))
+
+(pushnew #'beam-project-find-function project-find-functions)
+
+(cl-defmethod project-root ((p (head beam)))
+  (beam-project-root (cadr p)))
